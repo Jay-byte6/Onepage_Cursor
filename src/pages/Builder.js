@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLandingForm } from '../contexts/LandingFormContext';
 
 // Components
 import BusinessInfoForm from '../components/forms/BusinessInfoForm';
-import TemplateSelection from '../components/forms/TemplateSelection';
+import EnhancedTemplateSelection from '../components/forms/EnhancedTemplateSelection';
 import FormNavigation from '../components/forms/FormNavigation';
 
 const Builder = () => {
@@ -89,7 +89,7 @@ const Builder = () => {
             {currentStep === 1 ? (
               <BusinessInfoForm formData={formData} updateFormData={updateFormData} />
             ) : (
-              <TemplateSelection formData={formData} updateFormData={updateFormData} />
+              <EnhancedTemplateSelection />
             )}
           </div>
 

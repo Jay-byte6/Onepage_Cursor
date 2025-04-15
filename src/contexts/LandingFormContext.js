@@ -12,6 +12,36 @@ const initialFormState = {
   targetAudience: '',
   bannerImage: null,
   templateChoice: 'minimalist-emotion', // Default template
+  themeCategory: 'modern', // Default theme category
+  customizations: {
+    colors: {
+      primary: '#0ea5e9',
+      secondary: '#d946ef',
+      accent: '#f59e0b',
+      background: '#ffffff',
+      text: '#111827'
+    },
+    fonts: {
+      heading: 'Poppins',
+      body: 'Inter'
+    },
+    animations: {
+      hero: 'fade',
+      sections: 'slideUp',
+      buttons: 'pulse'
+    },
+    layout: {
+      heroStyle: 'centered',
+      serviceLayout: 'grid',
+      testimonialStyle: 'cards',
+      footerStyle: 'standard'
+    },
+    graphics: {
+      style: 'minimal',
+      icons: 'outlined',
+      illustrations: true
+    }
+  }
 };
 
 const LandingFormContext = createContext();
@@ -23,9 +53,26 @@ export const LandingFormProvider = ({ children }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [generatedPageData, setGeneratedPageData] = useState(null);
+  const [userCredits, setUserCredits] = useState(10); // New user credits state
+  const [savedTemplates, setSavedTemplates] = useState([]); // User's saved templates
+  const [communityTemplates, setCommunityTemplates] = useState([]); // Community shared templates
+  const [customizationMode, setCustomizationMode] = useState(false); // For toggling customization panel
 
   const updateFormData = (updates) => {
     setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  const updateCustomization = (category, property, value) => {
+    setFormData(prev => ({
+      ...prev,
+      customizations: {
+        ...prev.customizations,
+        [category]: {
+          ...prev.customizations[category],
+          [property]: value
+        }
+      }
+    }));
   };
 
   const generateTagline = async () => {
@@ -102,11 +149,63 @@ export const LandingFormProvider = ({ children }) => {
     return pageContent;
   };
 
+  // New function to save template to community
+  const saveTemplateToLibrary = (templateName, isPublic = false) => {
+    const newTemplate = {
+      id: `template-${Date.now()}`,
+      name: templateName,
+      createdAt: new Date().toISOString(),
+      formData: { ...formData },
+      pageData: { ...generatedPageData },
+      isPublic: isPublic,
+      creatorId: 'current-user-id', // In a real app, this would be the actual user ID
+      usageCount: 0
+    };
+    
+    setSavedTemplates(prev => [...prev, newTemplate]);
+    
+    if (isPublic) {
+      setCommunityTemplates(prev => [...prev, newTemplate]);
+    }
+    
+    return newTemplate.id;
+  };
+
+  // New function to use a community template
+  const useTemplate = (templateId) => {
+    const template = [...savedTemplates, ...communityTemplates].find(t => t.id === templateId);
+    
+    if (template) {
+      // Award credits to creator if template is from community
+      if (template.creatorId !== 'current-user-id' && template.isPublic) {
+        // In a real app, this would send a request to the backend to credit the creator
+        // Here we just increment the usage count
+        setCommunityTemplates(prev => 
+          prev.map(t => t.id === templateId ? { ...t, usageCount: t.usageCount + 1 } : t)
+        );
+      }
+      
+      // Load the template settings
+      setFormData({ ...template.formData });
+      setGeneratedPageData({ ...template.pageData });
+      
+      return true;
+    }
+    
+    return false;
+  };
+
+  // Add or remove user credits
+  const updateUserCredits = (amount) => {
+    setUserCredits(prev => prev + amount);
+  };
+
   const resetForm = () => {
     setFormData(initialFormState);
     setCurrentStep(1);
     setIsPreviewMode(false);
     setGeneratedPageData(null);
+    setCustomizationMode(false);
   };
 
   const value = {
@@ -120,6 +219,15 @@ export const LandingFormProvider = ({ children }) => {
     generatePageContent,
     generatedPageData,
     resetForm,
+    userCredits,
+    updateUserCredits,
+    savedTemplates,
+    communityTemplates,
+    saveTemplateToLibrary,
+    useTemplate,
+    customizationMode,
+    setCustomizationMode,
+    updateCustomization
   };
 
   return (
